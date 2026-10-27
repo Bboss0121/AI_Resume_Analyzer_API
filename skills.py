@@ -53,6 +53,26 @@ def find_skills(text):
     if re.search(pattern,text):
       found.append(skill)
   return found
+def compare_skills(resume_text,job_text):
+  resume_skills = set(find_skills(resume_text))
+  job_skills = set(find_skills(job_text))
+
+  matched = resume_skills & job_skills
+  missing = job_skills - resume_skills
+  extra = resume_skills - job_skills
+
+  if len(job_skills) == 0:
+    score = 0
+  else:
+     score = round(len(matched) / len(job_skills) * 100)
+
+  return {
+    "score": score,
+    "matched": sorted(matched),
+    "missing": sorted(missing),
+    "extra": sorted(extra),
+  }
 if __name__ == "__main__":
-  sample = "I know Java Script, C++ and Python"
-  print(find_skills(sample))
+  job = "We need Python, SQL, Docker, FastAPI and Git."
+  resume = "i know python, flask, html"
+  print(compare_skills(resume,job))
