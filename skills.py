@@ -48,10 +48,12 @@ SKILLS = {
 def find_skills(text):
   text = text.lower()
   found = []
-  for skill in SKILLS:
-    pattern = r"\b" + re.escape(skill) + r"\b"
-    if re.search(pattern,text):
-      found.append(skill)
+  for skill,aliases in SKILLS.items():
+    for alias in aliases:
+     pattern = r"(?<!\w)" + re.escape(alias) + r"(?!\w)"
+     if re.search(pattern,text):
+       found.append(skill)
+       break
   return found
 def compare_skills(resume_text,job_text):
   resume_skills = set(find_skills(resume_text))
