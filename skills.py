@@ -1,4 +1,5 @@
 import re
+from similarity import text_similarity
 SKILLS = {
   "python": ["python"],
   "java": ["java"],
@@ -64,12 +65,16 @@ def compare_skills(resume_text,job_text):
   extra = resume_skills - job_skills
 
   if len(job_skills) == 0:
-    score = 0
+    skill_score = 0
   else:
-     score = round(len(matched) / len(job_skills) * 100)
+     skill_score = round(len(matched) / len(job_skills) * 100)
+
+  sem = text_similarity(resume_text, job_text)
 
   return {
-    "score": score,
+    "score": round(skill_score * 0.6 + sem * 0.4),
+    "semantic_score": sem,
+    "skill_score": skill_score,
     "matched": sorted(matched),
     "missing": sorted(missing),
     "extra": sorted(extra),
