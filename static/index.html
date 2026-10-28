@@ -1,84 +1,284 @@
 <!DOCTYPE html>
-<html lang ="en">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AI Resume Analyzer</title>
+  <title>AI Resume Analyzer Pro</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 16px; }
-    textarea { width: 100%; height: 160px; margin: 8px 0; }
-    button { padding: 8px 16px; cursor: pointer; }
-    .error { color: #b00020; }
-    .score { font-size: 32px; font-weight: bold; }
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --error: #ef4444;
+      --success: #22c55e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); line-height: 1.5; padding: 20px; }
+
+    .container { max-width: 800px; margin: 40px auto; }
+
+    /* Auth Header bar */
+    .auth-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 14px; }
+    .auth-bar span { font-weight: 600; color: var(--primary); }
+
+    .card { background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); padding: 32px; margin-bottom: 24px; }
+
+    h1 { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+    p.subtitle { color: var(--text-muted); margin-bottom: 24px; }
+
+    /* Tabs for Login/Signup */
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+    .tab-btn { background: none; border: none; font-size: 16px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 4px 8px; }
+    .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: -12px; }
+
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 14px; }
+    input[type="file"], input[type="text"], input[type="password"], textarea {
+      width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: var(--primary); }
+    textarea { height: 150px; resize: vertical; }
+
+    button.btn { background-color: var(--primary); color: white; border: none; border-radius: 8px; padding: 12px 24px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; transition: background-color 0.2s; }
+    button.btn:hover { background-color: var(--primary-hover); }
+    button.btn:disabled { background-color: var(--text-muted); cursor: not-allowed; }
+
+    .error { color: var(--error); font-size: 14px; margin-top: 8px; }
+    .success { color: var(--success); font-size: 14px; margin-top: 8px; }
+
+    /* Results section */
+    .result-card { background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); padding: 32px; display: none; }
+    .score-banner { display: flex; align-items: center; justify-content: space-between; background: #e0e7ff; padding: 20px; border-radius: 8px; margin-bottom: 24px; }
+    .score-value { font-size: 36px; font-weight: 800; color: var(--primary); }
+
+    .skill-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+    .skill-box { background: var(--bg); padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary); }
+    .skill-box.missing { border-left-color: var(--error); }
+    .skill-box.extra { border-left-color: var(--text-muted); }
+    .skill-box h4 { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .skill-box p { font-size: 14px; font-weight: 500; }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
-   <h1>AI Resume Analyzer</h1>
 
-  <label>Resume (PDF)</label><br>
-  <input type="file" id="resume" accept=".pdf"><br><br>
+  <div class="container">
+    <!-- Auth Status Bar -->
+    <div id="authBar" class="auth-bar hidden">
+      Logged in as: <span id="currentUser"></span>
+      <button onclick="logout()" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">Logout</button>
+    </div>
 
-  <label>Job description</label>
-  <textarea id="job" placeholder="Paste the job description here"></textarea><br>
+    <!-- Auth Card (Login / Signup) -->
+    <div id="authCard" class="card">
+      <h1>Welcome to AI Resume Analyzer</h1>
+      <p class="subtitle">Please login or create an account to analyze your resume.</p>
 
-  <button id="analyze">Analyze</button>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+        <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+      </div>
 
-  <div id="result"></div>
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="username" placeholder="Enter your username">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter your password">
+      </div>
+
+      <button id="authBtn" class="btn" onclick="handleAuth()">Login</button>
+      <div id="authMessage"></div>
+    </div>
+
+    <!-- Main Analyzer Card (Hidden until logged in) -->
+    <div id="analyzerCard" class="card hidden">
+      <h1>AI Resume Matcher</h1>
+      <p class="subtitle">Upload your resume and paste a job description to get instant keyword & semantic feedback.</p>
+
+      <div class="form-group">
+        <label>Resume (PDF)</label>
+        <input type="file" id="resumeFile" accept=".pdf">
+      </div>
+
+      <div class="form-group">
+        <label>Job Description</label>
+        <textarea id="jobDescription" placeholder="Paste the full job description here..."></textarea>
+      </div>
+
+      <button id="analyzeBtn" class="btn" onclick="analyzeResume()">Analyze Match</button>
+      <div id="analyzeError" class="error"></div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultCard" class="result-card">
+      <div class="score-banner">
+        <div>
+          <h3>Overall Match Score</h3>
+          <p style="color: var(--text-muted); font-size: 13px;">Blended keyword & semantic analysis</p>
+        </div>
+        <div id="scoreDisplay" class="score-value">0%</div>
+      </div>
+
+      <div class="skill-grid">
+        <div class="skill-box">
+          <h4>Matched Skills</h4>
+          <p id="matchedSkills">None</p>
+        </div>
+        <div class="skill-box missing">
+          <h4>Missing Skills</h4>
+          <p id="missingSkills">None</p>
+        </div>
+        <div class="skill-box extra">
+          <h4>Extra Skills</h4>
+          <p id="extraSkills">None</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const button = document.getElementById("analyze");
-    const result = document.getElementById("result");
+    let isLoginMode = true;
+    let token = localStorage.getItem("token") || "";
+    let savedUser = localStorage.getItem("user") || "";
 
-    function showList(title, items) {
-      const h = document.createElement("h3");
-      h.textContent = title + " (" + items.length + ")";
-      result.appendChild(h);
-      const p = document.createElement("p");
-      p.textContent = items.length ? items.join(", ") : "None";
-      result.appendChild(p);
+    // Check existing auth state on load
+    if (token) {
+      showAnalyzer(savedUser);
     }
 
-    button.addEventListener("click", async () => {
-      result.innerHTML = "";
-      const file = document.getElementById("resume").files[0];
-      const job = document.getElementById("job").value.trim();
+    function switchTab(tab) {
+      isLoginMode = (tab === 'login');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('authBtn').textContent = isLoginMode ? 'Login' : 'Sign Up';
+      document.getElementById('authMessage').textContent = '';
+    }
 
-      if (!file) { result.innerHTML = '<p class="error">Please choose a PDF.</p>'; return; }
-      if (!job) { result.innerHTML = '<p class="error">Please paste a job description.</p>'; return; }
+    async function handleAuth() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const msgEl = document.getElementById('authMessage');
 
-      const formData = new FormData();
-      formData.append("resume", file);            // must match the endpoint parameter
-      formData.append("job_description", job);    // must match the endpoint parameter
+      if (!username || !password) {
+        msgEl.className = 'error';
+        msgEl.textContent = 'Please fill in all fields.';
+        return;
+      }
 
-      button.disabled = true;
-      button.textContent = "Analyzing...";
+      const endpoint = isLoginMode ? '/login' : '/signup';
+      const formData = new URLSearchParams();
+      formData.append('username', username);
+      formData.append('password', password);
 
       try {
-        const res = await fetch("/analyze", { method: "POST", body: formData });
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: formData
+        });
         const data = await res.json();
 
         if (!res.ok) {
-          const msg = typeof data.detail === "string" ? data.detail : "Something went wrong.";
-          result.innerHTML = '<p class="error">' + msg +'</p>';
-          result.firstChild.textContent = msg;
+          msgEl.className = 'error';
+          msgEl.textContent = data.detail || 'Authentication failed.';
           return;
         }
 
-        const score = document.createElement("div");
-        score.className = "score";
-        score.textContent = "Match score: " + data.score + "%";
-        result.appendChild(score);
-
-        showList("Matched skills", data.matched);
-        showList("Missing skills", data.missing);
-        showList("Extra skills", data.extra);
+        if (isLoginMode) {
+          token = data.access_token;
+          localStorage.setItem('token', token);
+          localStorage.setItem('user', username);
+          showAnalyzer(username);
+        } else {
+          msgEl.className = 'success';
+          msgEl.textContent = 'Account created successfully! Please log in.';
+          switchTab('login');
+        }
       } catch (err) {
-        result.innerHTML = '<p class="error">Could not reach the server. Is it running?</p>';
-      } finally {
-        button.disabled = false;
-        button.textContent = "Analyze";
+        msgEl.className = 'error';
+        msgEl.textContent = 'Could not connect to server.';
       }
-    });
+    }
+
+    function showAnalyzer(username) {
+      document.getElementById('authCard').classList.add('hidden');
+      document.getElementById('authBar').classList.remove('hidden');
+      document.getElementById('currentUser').textContent = username;
+      document.getElementById('analyzerCard').classList.remove('hidden');
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      location.reload();
+    }
+
+    async function analyzeResume() {
+      const fileInput = document.getElementById('resumeFile');
+      const jobDesc = document.getElementById('jobDescription').value.trim();
+      const errorEl = document.getElementById('analyzeError');
+      const resultCard = document.getElementById('resultCard');
+      const btn = document.getElementById('analyzeBtn');
+
+      errorEl.textContent = '';
+      resultCard.style.display = 'none';
+
+      if (!fileInput.files[0]) {
+        errorEl.textContent = 'Please select a PDF resume.';
+        return;
+      }
+      if (!jobDesc) {
+        errorEl.textContent = 'Please paste a job description.';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('resume', fileInput.files[0]);
+      formData.append('job_description', jobDesc);
+
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+
+      try {
+        const res = await fetch('/analyze', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: formData
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            alert('Session expired. Please log in again.');
+            logout();
+            return;
+          }
+          errorEl.textContent = data.detail || 'Something went wrong.';
+          return;
+        }
+
+        // Render results
+        document.getElementById('scoreDisplay').textContent = data.score + '%';
+        document.getElementById('matchedSkills').textContent = data.matched.length ? data.matched.join(', ') : 'None';
+        document.getElementById('missingSkills').textContent = data.missing.length ? data.missing.join(', ') : 'None';
+        document.getElementById('extraSkills').textContent = data.extra.length ? data.extra.join(', ') : 'None';
+
+        resultCard.style.display = 'block';
+      } catch (err) {
+        errorEl.textContent = 'Failed to connect to the server.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Analyze Match';
+      }
+    }
   </script>
 </body>
 </html>
