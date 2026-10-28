@@ -3,7 +3,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.staticfiles import StaticFiles
 from skills import compare_skills
 
-app = FastAPI(title="Ai Resume Analyzer")
+app = FastAPI(title="AI Resume Analyzer")
 
 def read_pdf(file) -> str:
   with pdfplumber.open(file) as pdf:
