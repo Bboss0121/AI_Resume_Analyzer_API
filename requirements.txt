@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pdfplumber
+scikit-learn
+sqlalchemy
+passlib[bcrypt]
+python-jose[cryptography]
+bcrypt
+python-multipart
+httpx
+pytest
