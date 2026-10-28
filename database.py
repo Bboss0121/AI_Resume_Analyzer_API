@@ -21,5 +21,13 @@ class Analysis(Base):
   created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
+class User(Base):
+  __tablename__ = "users"
+
+  id = Column(Integer, primary_key=True, index=True)
+  username = Column(String, unique=True, index=True)
+  hashed_password = Column(String)
+
+
 # Create the database tables
 Base.metadata.create_all(bind=engine)
