@@ -59,7 +59,7 @@
 
         if (!res.ok) {
           const msg = typeof data.detail === "string" ? data.detail : "Something went wrong.";
-          result.innerHTML = '<p class="error"></p>';
+          result.innerHTML = '<p class="error">' + msg +'</p>';
           result.firstChild.textContent = msg;
           return;
         }
